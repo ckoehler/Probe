@@ -21,7 +21,6 @@ impl Inputs {
             tokio::spawn(async move {
                 let mut z = ZMQInput::from_probe(&p).await;
                 loop {
-                    // this is blocking!!
                     let msg = z.get().await;
                     let name = z.name();
                     if tx.send((name, msg)).await.is_err() {
