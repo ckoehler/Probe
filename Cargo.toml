@@ -11,7 +11,7 @@ publish = true
 
 [dependencies]
 ratatui = "0.29"
-crossterm = { version = "0.28", features = ["event-stream"] }
+crossterm = { version = "0.29", features = ["event-stream"] }
 argh="0.1"
 regex = "1"
 itertools = "0.14"
