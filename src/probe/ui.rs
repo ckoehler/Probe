@@ -15,7 +15,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         draw_list(f, app);
     }
 }
-pub fn draw_detail(f: &mut Frame, app: &mut App) {
+pub fn draw_detail(f: &mut Frame, app: &App) {
     let text = app.selected_probe().messages();
     let p = Paragraph::new(text)
         .block(
