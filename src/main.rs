@@ -18,8 +18,9 @@ use crossterm::{
 };
 use ratatui::{Terminal, backend::CrosstermBackend};
 use std::fs;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::{error::Error, io, time::Duration};
+use tokio::sync::Mutex;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -54,7 +55,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         loop {
             let msg = inputs.next().await.expect("Failed to get next input.");
             {
-                let mut app = tapp.lock().expect("Failed to lock Mutex");
+                let mut app = tapp.lock().await;
                 app.process_message_for_stream(&msg.0, &msg.1);
             }
         }
@@ -62,47 +63,47 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // event loop
     loop {
         {
-            let mut app = app.lock().expect("Failed to lock Mutex");
+            let mut app = app.lock().await;
             terminal.draw(|f| ui::draw(f, &mut app))?;
         }
 
         match events.next().await {
             Some(Event::Input(key)) => match key.code {
                 KeyCode::Char(c) => {
-                    let mut app = app.lock().expect("Failed to lock Mutex");
+                    let mut app = app.lock().await;
                     app.on_key(c);
                 }
                 KeyCode::Enter => {
-                    let mut app = app.lock().expect("Failed to lock Mutex");
+                    let mut app = app.lock().await;
                     app.on_key('\n');
                 }
                 KeyCode::Up => {
-                    let mut app = app.lock().expect("Failed to lock Mutex");
+                    let mut app = app.lock().await;
                     app.on_up();
                 }
                 KeyCode::Down => {
-                    let mut app = app.lock().expect("Failed to lock Mutex");
+                    let mut app = app.lock().await;
                     app.on_down();
                 }
                 KeyCode::Left => {
-                    let mut app = app.lock().expect("Failed to lock Mutex");
+                    let mut app = app.lock().await;
                     app.on_left();
                 }
                 KeyCode::Right => {
-                    let mut app = app.lock().expect("Failed to lock Mutex");
+                    let mut app = app.lock().await;
                     app.on_right();
                 }
                 _ => {}
             },
             Some(Event::Tick) => {
                 info!("got tick");
-                let mut app = app.lock().expect("Failed to lock Mutex");
+                let mut app = app.lock().await;
                 app.on_tick();
             }
             None => {}
         }
 
-        let app = app.lock().expect("Failed to lock Mutex");
+        let app = app.lock().await;
         if app.should_quit {
             io::stdout().execute(LeaveAlternateScreen)?;
             disable_raw_mode()?;
