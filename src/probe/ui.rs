@@ -8,6 +8,10 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph, Row, Sparkline, Table, Tabs, Wrap},
 };
 
+const INACTIVE_STYLE: Style = Style::new().fg(Color::White);
+const ACTIVE_STYLE: Style = Style::new().fg(Color::Blue);
+const HEADER_STYLE: Style = Style::new().fg(Color::White);
+
 pub fn draw(f: &mut Frame, app: &mut App) {
     if app.state.detail_view {
         draw_detail(f, app);
@@ -23,7 +27,7 @@ pub fn draw_detail(f: &mut Frame, app: &App) {
                 .title(app.selected_probe().name)
                 .borders(Borders::ALL),
         )
-        .style(Style::default().fg(Color::White).bg(Color::Black))
+        .style(INACTIVE_STYLE)
         .wrap(Wrap { trim: true });
 
     f.render_widget(p, f.area());
@@ -34,16 +38,11 @@ pub fn draw_list(f: &mut Frame, app: &mut App) {
     let probes_per_tab = (f.area().height as usize - 3) / 5;
     app.tabs.recalculate_layout(num_probes, probes_per_tab);
     let titles: Vec<Line> = (0..app.tabs.num_tabs)
-        .map(|t| {
-            Line::from(Span::styled(
-                format!("Page {}", t + 1),
-                Style::default().fg(Color::White),
-            ))
-        })
+        .map(|t| Line::from(Span::styled(format!("Page {}", t + 1), HEADER_STYLE)))
         .collect();
     let tabs = Tabs::new(titles)
         .block(Block::default().borders(Borders::ALL).title(app.title))
-        .highlight_style(Style::default().fg(Color::Blue))
+        .highlight_style(ACTIVE_STYLE)
         .select(app.tabs.selected_tab);
 
     let chunks = Layout::default()
@@ -64,7 +63,7 @@ pub fn draw_list(f: &mut Frame, app: &mut App) {
     ));
     let p = Paragraph::new(help_text)
         .block(Block::default().title("Keys").borders(Borders::ALL))
-        .style(Style::default().fg(Color::White).bg(Color::Black))
+        .style(INACTIVE_STYLE)
         .wrap(Wrap { trim: true });
 
     f.render_widget(p, chunks[2]);
@@ -80,9 +79,9 @@ fn draw_tab(f: &mut Frame, app: &App, area: Rect) {
     // for each probe, draw it in a chunk
     probes.iter().enumerate().for_each(|(i, p)| {
         let style = if i == app.tabs.selected_probe {
-            Style::default().fg(Color::Blue)
+            ACTIVE_STYLE
         } else {
-            Style::default().fg(Color::White)
+            INACTIVE_STYLE
         };
         let block = Block::default()
             .borders(Borders::ALL)
@@ -101,14 +100,13 @@ fn draw_probe(f: &mut Frame, probe: &Probe, area: Rect) {
         .margin(1)
         .split(area);
 
-    let style = Style::default().fg(Color::White);
-
-    let rows = vec![Row::new(vec![probe.filter.clone(), probe.count.to_string()]).style(style)];
+    let rows =
+        vec![Row::new(vec![probe.filter.clone(), probe.count.to_string()]).style(INACTIVE_STYLE)];
 
     let widths = [Constraint::Length(8), Constraint::Length(6)];
     let table = Table::new(rows, widths).header(
         Row::new(vec!["Match", "Count"])
-            .style(Style::default().fg(Color::White))
+            .style(HEADER_STYLE)
             .bottom_margin(1),
     );
     f.render_widget(table, chunks[0]);
@@ -116,12 +114,8 @@ fn draw_probe(f: &mut Frame, probe: &Probe, area: Rect) {
     // fill the histogram
     let data = probe.histogram();
     let sparkline = Sparkline::default()
-        .block(
-            Block::default()
-                .title("Histogram")
-                .style(Style::default().fg(Color::White)),
-        )
-        .style(Style::default().fg(Color::Blue))
+        .block(Block::default().title("Histogram").style(INACTIVE_STYLE))
+        .style(ACTIVE_STYLE)
         .data(&data[..])
         .bar_set(ratatui::symbols::bar::THREE_LEVELS);
     f.render_widget(sparkline, chunks[1]);
