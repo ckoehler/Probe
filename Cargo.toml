@@ -67,3 +67,11 @@ install-updater = false
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["async_tokio"] }
+rand = "0.9"
+
+[[bench]]
+name = "probe_benchmarks"
+harness = false
