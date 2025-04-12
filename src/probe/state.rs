@@ -1,5 +1,5 @@
 // use crate::probe::config;
-use regex::Regex;
+use regex::{Error as RegexError, Regex};
 use std::cmp;
 use std::collections::VecDeque;
 
@@ -95,20 +95,51 @@ pub struct AppState {
     pub detail_view: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Probe {
     pub name: String,
-    pub filter: String,
+    pub filter: Regex,
     pub count: u32,
     ring: VecDeque<u64>,
     ring_buffer: u64,
     messages: VecDeque<String>,
 }
 
+impl Clone for Probe {
+    fn clone(&self) -> Self {
+        Probe {
+            name: self.name.clone(),
+            // Regex doesn't implement Clone, so we recompile it from its string representation.
+            filter: Regex::new(self.filter.as_str())
+                .expect("Failed to recompile regex during clone"),
+            count: self.count,
+            ring: self.ring.clone(),
+            ring_buffer: self.ring_buffer,
+            messages: self.messages.clone(),
+        }
+    }
+}
+
 impl AppState {
     pub fn from_probes(p: &[ProbeConfig]) -> AppState {
+        let probes: Vec<Probe> = p
+            .iter()
+            .filter_map(|config| match Probe::try_from(config.clone()) {
+                Ok(probe) => Some(probe),
+                Err(e) => {
+                    eprintln!(
+                        "Failed to create probe '{}': Invalid regex '{}'. Error: {}",
+                        config.name,
+                        config.filter.as_deref().unwrap_or(".*"),
+                        e
+                    );
+                    None
+                }
+            })
+            .collect();
+
         AppState {
-            probes: p.iter().map(|i| Probe::from(i.clone())).collect(),
+            probes,
             detail_view: false,
         }
     }
@@ -121,15 +152,10 @@ impl AppState {
 
 impl Probe {
     pub fn process_message(&mut self, msg: &str) {
-        if self.filter.is_empty() {
+        if self.filter.is_match(msg) {
             self.update_message_buffer(msg);
-        } else {
-            let re = Regex::new(&self.filter).expect("Failed to parse regex");
-            if re.is_match(msg) {
-                self.update_message_buffer(msg);
-                self.count += 1;
-                self.ring_buffer += 1;
-            }
+            self.count += 1;
+            self.ring_buffer += 1;
         }
     }
 
@@ -158,16 +184,21 @@ impl Probe {
     }
 }
 
-impl From<ProbeConfig> for Probe {
-    fn from(item: ProbeConfig) -> Self {
-        Probe {
+impl TryFrom<ProbeConfig> for Probe {
+    type Error = RegexError;
+
+    fn try_from(item: ProbeConfig) -> Result<Self, Self::Error> {
+        let filter_str = item.filter.unwrap_or_else(|| ".*".to_string());
+        let regex = Regex::new(&filter_str)?; // Compile the regex, propagate error if fails
+
+        Ok(Probe {
             name: item.name,
-            filter: item.filter.unwrap_or(".*".to_string()),
+            filter: regex, // Use the compiled regex
             count: 0,
             ring_buffer: 0,
             messages: VecDeque::with_capacity(MESSAGE_BUFFER_SIZE),
             ring: VecDeque::with_capacity(RING_BUFFER_SIZE),
-        }
+        })
     }
 }
 
@@ -352,7 +383,7 @@ mod tests {
     fn test_probe_process_message_with_filter() {
         let mut probe = Probe {
             name: "test_probe".to_string(),
-            filter: "error".to_string(),
+            filter: Regex::new("error").unwrap(),
             count: 0,
             ring_buffer: 0,
             messages: VecDeque::new(),
@@ -373,28 +404,10 @@ mod tests {
     }
 
     #[test]
-    fn test_probe_process_message_without_filter() {
-        let mut probe = Probe {
-            name: "test_probe".to_string(),
-            filter: String::new(), // Empty filter matches everything
-            count: 0,
-            ring_buffer: 0,
-            messages: VecDeque::new(),
-            ring: VecDeque::new(),
-        };
-
-        // Empty filter should accept all messages but not increase counters
-        probe.process_message("This is a regular message");
-        assert_eq!(probe.count, 0); // should not increase with empty filter
-        assert_eq!(probe.ring_buffer, 0); // should not increase with empty filter
-        assert_eq!(probe.messages.len(), 1); // should still store the message
-    }
-
-    #[test]
     fn test_update_message_buffer_capacity() {
         let mut probe = Probe {
             name: "test_probe".to_string(),
-            filter: ".*".to_string(),
+            filter: Regex::new(".*").unwrap(),
             count: 0,
             ring_buffer: 0,
             messages: VecDeque::new(),
@@ -418,7 +431,7 @@ mod tests {
     fn test_update_state_ring_buffer() {
         let mut probe = Probe {
             name: "test_probe".to_string(),
-            filter: ".*".to_string(),
+            filter: Regex::new(".*").unwrap(),
             count: 0,
             ring_buffer: 42, // Set some value to be transferred to ring
             messages: VecDeque::new(),
@@ -497,7 +510,7 @@ mod tests {
     fn test_probe_histogram_empty() {
         let probe = Probe {
             name: "test".to_string(),
-            filter: ".*".to_string(),
+            filter: Regex::new(".*").unwrap(),
             count: 0,
             ring_buffer: 0,
             messages: VecDeque::new(),
