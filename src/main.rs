@@ -3,24 +3,22 @@ use tracing::info;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{self, Layer, layer::SubscriberExt};
-mod probe;
 
-use crate::probe::app::App;
-use crate::probe::config::{Cli, Probes};
-use crate::probe::event::{Config, Event, Events};
-use crate::probe::inputs::Inputs;
-use crate::probe::state::AppState;
-use crate::probe::ui;
 use crossterm::{
     ExecutableCommand,
     event::KeyCode,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{Terminal, backend::CrosstermBackend};
-use std::fs;
-use std::sync::Arc;
-use std::{error::Error, io, time::Duration};
+use std::{error::Error, fs, io, sync::Arc, time::Duration};
 use tokio::sync::Mutex;
+
+use probe_zmq::probe::app::App;
+use probe_zmq::probe::config::{Cli, Probes};
+use probe_zmq::probe::event::{Config, Event, Events};
+use probe_zmq::probe::inputs::Inputs;
+use probe_zmq::probe::state::AppState;
+use probe_zmq::probe::ui;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
