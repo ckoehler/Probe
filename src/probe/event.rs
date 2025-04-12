@@ -74,6 +74,7 @@ mod tests {
     use super::*;
     use tokio::time::timeout;
 
+    #[ignore = "Ignore for now because it requires a TTY, which doesn't exist in GHA"]
     #[tokio::test]
     async fn test_events_config() {
         let config = Config {
@@ -89,6 +90,7 @@ mod tests {
         assert_eq!(config.tick_rate, Duration::from_millis(250));
     }
 
+    #[ignore = "Ignore for now because it requires a TTY, which doesn't exist in GHA"]
     #[tokio::test]
     async fn test_events_tick_generation() {
         let config = Config {
@@ -107,6 +109,7 @@ mod tests {
         }
     }
 
+    #[ignore = "Ignore for now because it requires a TTY, which doesn't exist in GHA"]
     #[tokio::test]
     async fn test_events_multiple_ticks() {
         let config = Config {
