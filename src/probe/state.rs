@@ -5,6 +5,9 @@ use std::collections::VecDeque;
 
 use super::config::ProbeConfig;
 
+const MESSAGE_BUFFER_SIZE: usize = 60;
+const RING_BUFFER_SIZE: usize = 180;
+
 #[derive(Debug)]
 pub struct TabsState {
     pub num_tabs: usize,
@@ -136,7 +139,7 @@ impl Probe {
 
     pub fn update_message_buffer(&mut self, msg: &str) {
         self.messages.push_front(msg.to_string());
-        if self.messages.len() > 60 {
+        if self.messages.len() > MESSAGE_BUFFER_SIZE {
             self.messages.pop_back();
         }
     }
@@ -144,7 +147,7 @@ impl Probe {
     // this is called once per tick, so do display related stuff here.
     pub fn update_state(&mut self) {
         self.ring.push_front(self.ring_buffer);
-        if self.ring.len() >= 180 {
+        if self.ring.len() >= RING_BUFFER_SIZE {
             self.ring.pop_back();
         }
         self.ring_buffer = 0;
@@ -162,8 +165,8 @@ impl From<ProbeConfig> for Probe {
             filter: item.filter.unwrap_or(".*".to_string()),
             count: 0,
             ring_buffer: 0,
-            messages: VecDeque::with_capacity(60),
-            ring: VecDeque::with_capacity(60),
+            messages: VecDeque::with_capacity(MESSAGE_BUFFER_SIZE),
+            ring: VecDeque::with_capacity(RING_BUFFER_SIZE),
         }
     }
 }
@@ -398,13 +401,13 @@ mod tests {
             ring: VecDeque::new(),
         };
 
-        // Add more than the capacity (60) messages
-        for i in 0..65 {
+        // Add more than the capacity (MESSAGE_BUFFER_SIZE) messages
+        for i in 0..MESSAGE_BUFFER_SIZE + 5 {
             probe.update_message_buffer(&format!("Message {i}"));
         }
 
-        // Should only keep the most recent 60 messages
-        assert_eq!(probe.messages.len(), 60);
+        // Should only keep the most recent MESSAGE_BUFFER_SIZE messages
+        assert_eq!(probe.messages.len(), MESSAGE_BUFFER_SIZE);
         // The newest message should be at the front
         assert_eq!(probe.messages.front().unwrap(), "Message 64");
         // The oldest kept message should be at the back
