@@ -100,8 +100,8 @@ fn draw_probe(f: &mut Frame, probe: &Probe, area: Rect) {
         .margin(1)
         .split(area);
 
-    let rows =
-        vec![Row::new(vec![probe.filter.clone(), probe.count.to_string()]).style(INACTIVE_STYLE)];
+    let count = probe.count.to_string();
+    let rows = vec![Row::new(vec![probe.filter.as_str(), &count]).style(INACTIVE_STYLE)];
 
     let widths = [Constraint::Length(8), Constraint::Length(6)];
     let table = Table::new(rows, widths).header(
