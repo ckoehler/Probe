@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let cli: Cli = argh::from_env();
     let config = fs::read_to_string(cli.config).expect("Something went wrong reading the file");
     let probes: Probes = toml::from_str(&config).expect("Couldn't parse config file.");
-    probes.validate();
+    probes.validate()?;
 
     // set up terminal
     enable_raw_mode()?;

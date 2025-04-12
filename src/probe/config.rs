@@ -1,7 +1,20 @@
 use argh::FromArgs;
-use itertools::Itertools;
+use regex::Error as RegexError;
 use regex::Regex;
 use serde::Deserialize;
+use std::collections::HashSet;
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum ConfigError {
+    #[error("Invalid regex for probe '{probe_name}': {source}")]
+    InvalidRegex {
+        probe_name: String,
+        source: RegexError,
+    },
+    #[error("Duplicate probe name found: {name}")]
+    DuplicateProbeName { name: String },
+}
 
 /// Probe Config
 #[derive(Debug, FromArgs)]
@@ -26,20 +39,28 @@ pub struct ProbeConfig {
 }
 
 impl Probes {
-    pub fn validate(&self) {
-        self.probes.iter().for_each(ProbeConfig::validate);
+    pub fn validate(&self) -> Result<(), ConfigError> {
+        let mut names = HashSet::new();
+        for probe in &self.probes {
+            probe.validate()?;
 
-        // make sure all probe names are unique
-        let p: Vec<&String> = self.probes.iter().map(|p| &p.name).unique().collect();
-        assert!(
-            p.len() == self.probes.len(),
-            "Make sure Probe names are unique."
-        );
+            // Check for duplicate names
+            if !names.insert(&probe.name) {
+                return Err(ConfigError::DuplicateProbeName {
+                    name: probe.name.clone(),
+                });
+            }
+        }
+        Ok(())
     }
 }
 impl ProbeConfig {
-    fn validate(&self) {
-        // make sure Filter is a valid regex
-        Regex::new(self.filter.as_deref().unwrap_or(".*")).expect("Invalid regex");
+    fn validate(&self) -> Result<(), ConfigError> {
+        let pattern = self.filter.as_deref().unwrap_or(".*");
+        Regex::new(pattern).map_err(|e| ConfigError::InvalidRegex {
+            probe_name: self.name.clone(),
+            source: e,
+        })?;
+        Ok(())
     }
 }
