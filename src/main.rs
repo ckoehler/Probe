@@ -53,10 +53,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let tapp = Arc::clone(&app);
     tokio::spawn(async move {
         loop {
-            let msg = inputs.next().await.expect("Failed to get next input.");
-            {
+            if let Some(msg) = inputs.next().await {
                 let mut app = tapp.lock().await;
                 app.process_message_for_stream(&msg.0, &msg.1);
+            } else {
+                info!("Input stream closed, exiting...");
+                break;
             }
         }
     });
