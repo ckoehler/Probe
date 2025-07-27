@@ -47,6 +47,9 @@ codegen-units = 1
 
 [workspace.lints.clippy]
 pedantic = { level = "deny", priority = -1 }
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
 cast_precision_loss = "allow"
 unwrap_used = "deny"
 
