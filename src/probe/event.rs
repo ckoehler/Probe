@@ -40,10 +40,9 @@ impl Events {
                 loop {
                     if let Ok(crossterm::event::Event::Key(key)) =
                         reader.next().await.expect("Failed to read terminal event")
+                        && let Err(err) = tx.send(Event::Input(key)).await
                     {
-                        if let Err(err) = tx.send(Event::Input(key)).await {
-                            error!("{}", err);
-                        }
+                        error!("{}", err);
                     }
                 }
             });
