@@ -73,9 +73,6 @@ ignore = [
     # paste unmaintained
     "RUSTSEC-2024-0436",
 
-    # humantime unmaintained. Only using that in debug builds, so no problem.
-    "RUSTSEC-2025-0014",
-
   # comments
 ]
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
