@@ -1,0 +1,20 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "cargo": {
+    "enabled": true
+  },
+  "github-actions": {
+    "enabled": true
+  },
+  "ignorePaths": [
+    ".github/workflows/release.yml"
+  ],
+  "prConcurrentLimit": 10,
+  "schedule": [
+    "at any time"
+  ],
+  "dependencyDashboard": true
+}
