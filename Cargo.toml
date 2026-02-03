@@ -10,7 +10,7 @@ readme = "README.md"
 publish = true
 
 [dependencies]
-ratatui = "0.29"
+ratatui = "0.30"
 crossterm = { version = "0.29", features = ["event-stream"] }
 argh="0.1"
 regex = "1"
@@ -57,7 +57,7 @@ unwrap_used = "deny"
 workspace = true
 
 [dev-dependencies]
-criterion = { version = "0.7", features = ["async_tokio"] }
+criterion = { version = "0.8.1", features = ["async_tokio"] }
 rand = "0.9"
 
 [[bench]]
