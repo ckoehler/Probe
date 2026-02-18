@@ -16,7 +16,7 @@ argh="0.1"
 regex = "1"
 itertools = "0.14"
 rand = "0.9"
-toml = "0.9"
+toml = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.47", features = ["macros", "rt-multi-thread", "sync", "time"] }
 tracing = "0.1.41"
