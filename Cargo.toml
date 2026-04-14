@@ -23,7 +23,7 @@ tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 tracing-error = "0.2.1"
 color-eyre = "0.6.5"
-zeromq = "0.4.1"
+zeromq = "0.5.0"
 tokio-stream = "0.1.17"
 console-subscriber = { version = "0.5.0", optional = true }
 thiserror = "2.0.14"
